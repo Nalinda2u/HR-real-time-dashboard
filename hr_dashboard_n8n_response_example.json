@@ -1,0 +1,42 @@
+{
+  "employees_endpoint_expected_response": {
+    "success": true,
+    "data": [
+      {
+        "id": 1,
+        "Surname": "Perera",
+        "Given Names": "Nimal",
+        "Contact Mobile No": "+61474732844",
+        "Contact Email Address": "nimal@example.com",
+        "Nationality": "Sri Lankan",
+        "suburb": "Melbourne",
+        "Postal Code": "3000",
+        "current_visa": "Student Visa",
+        "visa_class": "500",
+        "visa_sub_class": "500",
+        "visa_expiry_date": "2026-05-15",
+        "restricted_work_hours": "YES",
+        "restriction_details": "48 hours per fortnight",
+        "declaration_date": "2026-04-18T09:00:00Z"
+      }
+    ]
+  },
+  "notifications_endpoint_expected_response": {
+    "success": true,
+    "data": [
+      {
+        "id": "notif-1",
+        "title": "New employee registration",
+        "message": "Nimal Perera submitted the employee form",
+        "type": "success",
+        "created_at": "2026-04-18T09:01:00Z",
+        "read": false
+      }
+    ]
+  },
+  "auth_endpoint_expected_response": {
+    "success": true,
+    "token": "your-jwt-or-session-token",
+    "admin_name": "HR Admin"
+  }
+}

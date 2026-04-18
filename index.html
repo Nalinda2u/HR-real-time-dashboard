@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AMC HR Real-time Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./hr_dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div id="appShell" class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">A</div>
+        <div>
+          <h1>AMC HR</h1>
+          <p>Real-time Dashboard</p>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-link active" data-section="overview">Overview</button>
+        <button class="nav-link" data-section="employees">Employees</button>
+        <button class="nav-link" data-section="alerts">Visa Alerts</button>
+        <button class="nav-link" data-section="notifications">Notifications</button>
+        <button class="nav-link" data-section="settings">Settings</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="themeToggle" class="ghost-btn">🌗 Theme</button>
+        <button id="logoutBtn" class="danger-ghost">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h2>Dashboard</h2>
+          <p id="lastSyncText">Waiting for live data...</p>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="search-box">
+            <input id="globalSearch" type="search" placeholder="Search by name, nationality, visa, suburb..." />
+          </div>
+          <button id="refreshBtn" class="primary-btn">Refresh</button>
+          <button id="exportCsvBtn" class="secondary-btn">Export Excel/CSV</button>
+          <button id="exportPdfBtn" class="secondary-btn">Export PDF</button>
+        </div>
+      </header>
+
+      <section id="overviewSection" class="content-section active-section">
+        <div class="hero-card">
+          <div>
+            <span class="eyebrow">HR Intelligence</span>
+            <h3>Live employee insights from Google Sheets + n8n</h3>
+            <p>
+              Total employees, nationality split, visa type breakdown, work restrictions, expiry alerts,
+              and instant notifications for new registrations.
+            </p>
+          </div>
+          <div class="hero-metrics">
+            <div class="hero-pill"><span id="liveStatusDot" class="live-dot"></span> Live</div>
+            <div class="hero-pill" id="adminNameTag">Admin</div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>Total Employees</span>
+            <strong id="totalEmployees">0</strong>
+            <small>All employee records</small>
+          </article>
+          <article class="stat-card">
+            <span>Nationalities</span>
+            <strong id="totalNationalities">0</strong>
+            <small>Unique nationality count</small>
+          </article>
+          <article class="stat-card warning">
+            <span>Visa Expiring in 30 Days</span>
+            <strong id="expiring30">0</strong>
+            <small>Needs urgent HR action</small>
+          </article>
+          <article class="stat-card accent">
+            <span>Restricted Work Hours</span>
+            <strong id="restrictedCount">0</strong>
+            <small>Employees with limits</small>
+          </article>
+          <article class="stat-card success">
+            <span>Active Visa Types</span>
+            <strong id="visaTypeCount">0</strong>
+            <small>Detected from live records</small>
+          </article>
+          <article class="stat-card danger">
+            <span>Unread Notifications</span>
+            <strong id="unreadNotifications">0</strong>
+            <small>New registrations and alerts</small>
+          </article>
+        </div>
+
+        <div class="chart-grid">
+          <article class="panel">
+  <div class="panel-head">
+    <h3>Nationality Distribution</h3>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="nationalityChart"></canvas>
+  </div>
+</article>
+
+<article class="panel">
+  <div class="panel-head">
+    <h3>Visa Type Breakdown</h3>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="visaTypeChart"></canvas>
+  </div>
+</article>
+
+         <article class="panel">
+  <div class="panel-head">
+    <h3>Work Restriction Status</h3>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="restrictionChart"></canvas>
+  </div>
+</article>
+
+          <article class="panel">
+  <div class="panel-head">
+    <h3>Upcoming Visa Expiry Timeline</h3>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="expiryTimelineChart"></canvas>
+  </div>
+</article>
+        </div>
+
+        <div class="two-column-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Warning List</h3>
+              <span class="badge" id="warningCount">0 items</span>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Nationality</th>
+                    <th>Visa</th>
+                    <th>Expiry Date</th>
+                    <th>Days Left</th>
+                    <th>Restriction</th>
+                  </tr>
+                </thead>
+                <tbody id="warningTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Recent Registrations</h3>
+              <span class="badge" id="recentRegistrationsCount">0 items</span>
+            </div>
+            <div id="recentRegistrations" class="timeline-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="employeesSection" class="content-section hidden">
+        <article class="panel">
+          <div class="panel-head stack-mobile">
+            <div>
+              <h3>Employee Records</h3>
+              <p>Search, filter, and inspect employee details.</p>
+            </div>
+            <div class="filters-row">
+              <select id="visaFilter">
+                <option value="all">All Visa Types</option>
+              </select>
+              <select id="nationalityFilter">
+                <option value="all">All Nationalities</option>
+              </select>
+              <select id="restrictionFilter">
+                <option value="all">All Restriction Status</option>
+                <option value="restricted">Restricted only</option>
+                <option value="not-restricted">Not restricted</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Nationality</th>
+                  <th>Visa Type</th>
+                  <th>Visa Expiry</th>
+                  <th>Restriction</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="employeeTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section id="alertsSection" class="content-section hidden">
+        <article class="panel">
+          <div class="panel-head stack-mobile">
+            <div>
+              <h3>Visa Expiry Alerts</h3>
+              <p>Employees whose visas are expiring within 30 days.</p>
+            </div>
+            <button id="markAlertsReadBtn" class="secondary-btn">Mark alert notifications as read</button>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Visa</th>
+                  <th>Class/Subclass</th>
+                  <th>Expiry Date</th>
+                  <th>Days Left</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="alertsTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section id="notificationsSection" class="content-section hidden">
+        <article class="panel">
+          <div class="panel-head stack-mobile">
+            <div>
+              <h3>Notifications</h3>
+              <p>Instant notifications from n8n when new users register.</p>
+            </div>
+            <button id="markAllNotificationsReadBtn" class="secondary-btn">Mark all as read</button>
+          </div>
+          <div id="notificationList" class="notification-list"></div>
+        </article>
+      </section>
+
+      <section id="settingsSection" class="content-section hidden">
+        <div class="settings-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <h3>System Details</h3>
+            </div>
+            <div class="settings-list">
+              <div><span>Employees API</span><strong id="employeesApiText">-</strong></div>
+              <div><span>Notifications API</span><strong id="notificationsApiText">-</strong></div>
+              <div><span>Auto Refresh</span><strong id="pollIntervalText">-</strong></div>
+              <div><span>Visa Warning Window</span><strong id="warningWindowText">-</strong></div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h3>Recommended Extras</h3>
+            </div>
+            <ul class="suggestion-list">
+              <li>Role-based access for Admin / HR Manager / Viewer</li>
+              <li>Email or WhatsApp reminders for visa expiry</li>
+              <li>Missing documents tracker</li>
+              <li>Department or location filters</li>
+              <li>Audit log for updates and logins</li>
+              <li>Monthly export archive in Google Drive</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-card">
+      <div class="login-brand">AMC HR</div>
+      <h2>Admin Login</h2>
+      <p>Secure access for HR and Admin users.</p>
+      <form id="loginForm" class="login-form">
+        <label>
+          Email
+          <input type="email" id="loginEmail" placeholder="admin@company.com" required />
+        </label>
+        <label>
+          Password
+          <input type="password" id="loginPassword" placeholder="••••••••" required />
+        </label>
+        <button type="submit" class="primary-btn full-width">Login</button>
+      </form>
+      <p class="login-note">
+        This frontend expects an n8n authentication endpoint that returns an access token.
+      </p>
+      <div id="loginMessage" class="inline-message"></div>
+    </div>
+  </div>
+
+  <script src="./hr_dashboard_config.js"></script>
+  <script src="./hr_dashboard.js"></script>
+</body>
+</html>
